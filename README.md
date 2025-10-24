@@ -90,15 +90,42 @@ types/
 
 ## Deployment
 
-Deploy to Vercel:
+### Prerequisites
 
-```bash
-# Deploy Convex backend
-npm run convex:deploy
+1. Create a Convex account at [convex.dev](https://convex.dev)
+2. Create a Vercel account at [vercel.com](https://vercel.com)
 
-# Deploy Next.js frontend (via Vercel CLI or GitHub integration)
-vercel
-```
+### Deploy to Vercel
+
+1. **Set up Convex deployment:**
+   ```bash
+   npx convex deploy
+   ```
+   This will create a production Convex deployment and provide you with a deployment URL.
+
+2. **Configure Vercel environment variables:**
+   
+   In your Vercel project settings, add these environment variables:
+   - `CONVEX_DEPLOYMENT`: Your Convex deployment URL (e.g., `https://your-project.convex.cloud`)
+   - `NEXT_PUBLIC_CONVEX_URL`: Same as CONVEX_DEPLOYMENT
+
+3. **Deploy to Vercel:**
+   
+   Connect your GitHub repository to Vercel, or use the CLI:
+   ```bash
+   vercel
+   ```
+
+   The build command `npm run build` will automatically:
+   - Deploy your Convex functions
+   - Generate the Convex API types
+   - Build the Next.js application
+
+### Important Notes
+
+- The `convex/_generated` folder is auto-generated during build and should not be committed to git
+- Make sure your Convex deployment URL is set in environment variables before deploying
+- The build script runs `convex deploy` which requires the `CONVEX_DEPLOY_KEY` environment variable (automatically set by Vercel when you link your project)
 
 ## License
 
