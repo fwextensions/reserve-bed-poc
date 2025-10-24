@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -22,7 +22,7 @@ const BED_TYPE_CONFIG: Record<BedType, { name: string; icon: string }> = {
 	grape: { name: "Grape", icon: "🍇" },
 };
 
-export default function ReservationFlowPage() {
+function ReservationFlowContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const user = useQuery(api.users.getCurrentUserWithRole);
@@ -481,5 +481,17 @@ export default function ReservationFlowPage() {
 				)}
 			</div>
 		</div>
+	);
+}
+
+export default function ReservationFlowPage() {
+	return (
+		<Suspense fallback={
+			<div className="space-y-4">
+				<p className="text-muted-foreground">Loading...</p>
+			</div>
+		}>
+			<ReservationFlowContent />
+		</Suspense>
 	);
 }
