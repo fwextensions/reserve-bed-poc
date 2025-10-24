@@ -131,9 +131,15 @@ export const createReservation = mutation({
 			createdAt: now,
 		});
 
-		// if there was an active hold, delete it
-		if (activeHold) {
-			await ctx.db.delete(activeHold._id);
+		// delete any holds for this user (active or expired)
+		// this ensures holds are cleaned up immediately when reservation is created
+		const userHolds = await ctx.db
+			.query("holds")
+			.withIndex("by_case_worker", (q) => q.eq("caseWorkerId", args.userId))
+			.collect();
+
+		for (const hold of userHolds) {
+			await ctx.db.delete(hold._id);
 		}
 
 		return {

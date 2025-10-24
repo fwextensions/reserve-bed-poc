@@ -72,20 +72,34 @@ export default function ReservationFlowPage() {
 		}
 	}, [activeHold, currentStep]);
 
-	// determine initial step based on pre-selected values
+	// determine initial step based on pre-selected values and place hold if needed
+	// this effect should only run once on mount to set up the initial state
 	useEffect(() => {
-		if (preselectedBedType && preselectedSiteId) {
+		if (!user) return;
+
+		// check if we already have an active hold - if so, use it
+		if (activeHold) {
+			setCurrentStep("clientInfo");
+			setHoldExpiresAt(activeHold.expiresAt);
+			setSelectedSiteId(activeHold.siteId);
+			setSelectedBedType(activeHold.bedType);
+			return;
+		}
+
+		// only place a new hold if we don't have one and haven't started placing one
+		if (preselectedBedType && preselectedSiteId && !isPlacingHold) {
 			// both pre-selected, place hold immediately
 			setCurrentStep("clientInfo");
 			handlePlaceHold(preselectedBedType, preselectedSiteId);
-		} else if (preselectedBedType) {
+		} else if (preselectedBedType && !preselectedSiteId) {
 			// only bed type pre-selected, go to site selection
 			setCurrentStep("site");
-		} else {
+		} else if (!preselectedBedType && !preselectedSiteId) {
 			// nothing pre-selected, start at bed type
 			setCurrentStep("bedType");
 		}
-	}, [preselectedBedType, preselectedSiteId]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [user]); // only run when user loads, not when activeHold changes
 
 	const handlePlaceHold = async (bedType: BedType, siteId: string) => {
 		if (!user) return;

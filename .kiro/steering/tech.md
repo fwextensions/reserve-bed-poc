@@ -88,6 +88,7 @@ Required environment variables:
 - Always use tabs for indentation.
 - Always use double quotes.
 - Always use semicolons.
+- Always use LF line endings, even on Windows.
 - Use trailing commas in object and array literals, but not in function parameters.
 - Use the `const` keyword for declarations, unless the variable is going to be re-assigned.
 - Use the `let` keyword for declarations that will be re-assigned.

@@ -28,15 +28,17 @@ export const getCurrentUserWithRole = query({
 
 /**
  * Get a site admin user for POC
- * POC: Returns the first site admin user
+ * POC: Returns the Community Care House admin (has all bed types)
  */
 export const getSiteAdminUser = query({
 	args: {},
 	handler: async (ctx) => {
-		// POC: Return first site admin
+		// POC: Return Community Care House admin for full bed type visibility
 		// In production, this would check actual authentication
 		const users = await ctx.db.query("users").collect();
-		const siteAdmin = users.find((u) => u.role === "site_admin");
+		const siteAdmin = users.find(
+			(u) => u.role === "site_admin" && u.email === "admin.communitycare@example.com"
+		);
 
 		if (!siteAdmin) {
 			return null;
