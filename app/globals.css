@@ -63,3 +63,29 @@ body {
 	background-color: hsl(var(--background));
 	color: hsl(var(--foreground));
 }
+
+@layer utilities {
+	.bg-background {
+		background-color: hsl(var(--background));
+	}
+
+	.text-foreground {
+		color: hsl(var(--foreground));
+	}
+
+	.text-muted-foreground {
+		color: hsl(var(--muted-foreground));
+	}
+
+	.border-border {
+		border-color: hsl(var(--border));
+	}
+
+	.ring-ring {
+		--tw-ring-color: hsl(var(--ring));
+	}
+
+	.ring-offset-background {
+		--tw-ring-offset-color: hsl(var(--background));
+	}
+}

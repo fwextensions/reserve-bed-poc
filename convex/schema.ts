@@ -45,7 +45,7 @@ export default defineSchema({
 		),
 		caseWorkerId: v.id("users"),
 		clientName: v.string(),
-		notes: v.string(),
+		notes: v.optional(v.string()),
 		createdAt: v.number(),
 	})
 		.index("by_site", ["siteId"])

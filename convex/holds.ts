@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 const HOLD_DURATION_MS = 30 * 1000; // 30 seconds
@@ -133,24 +133,82 @@ export const refreshHold = mutation({
 	handler: async (ctx, args) => {
 		const now = Date.now();
 
-		// get active hold
+		// get holds for this case worker (including recently expired ones)
 		const holds = await ctx.db
 			.query("holds")
 			.withIndex("by_case_worker", (q) => q.eq("caseWorkerId", args.userId))
 			.collect();
 
-		const activeHold = holds.find((hold) => hold.expiresAt > now);
+		// find the most recent hold (active or recently expired)
+		const recentHold = holds.sort((a, b) => b.expiresAt - a.expiresAt)[0];
 
-		if (!activeHold) {
+		if (!recentHold) {
 			return {
 				success: false,
-				error: "No active hold found",
+				error: "No hold found",
 				code: "not_found" as const,
 			};
 		}
 
+		// check if hold is still active or recently expired (within grace period)
+		const isActive = recentHold.expiresAt > now;
+		const isRecentlyExpired = now - recentHold.expiresAt < 10000; // 10 second grace period
+
+		if (!isActive && !isRecentlyExpired) {
+			return {
+				success: false,
+				error: "Hold has expired and cannot be refreshed",
+				code: "expired" as const,
+			};
+		}
+
+		// if recently expired, check if bed is still available
+		if (!isActive) {
+			const site = await ctx.db.get(recentHold.siteId);
+			if (!site) {
+				return {
+					success: false,
+					error: "Site not found",
+					code: "not_found" as const,
+				};
+			}
+
+			const totalBeds = site.bedCounts[recentHold.bedType];
+
+			// count other active holds for this bed type at this site
+			const allHolds = await ctx.db.query("holds").collect();
+			const otherActiveHolds = allHolds.filter(
+				(hold) =>
+					hold._id !== recentHold._id &&
+					hold.siteId === recentHold.siteId &&
+					hold.bedType === recentHold.bedType &&
+					hold.expiresAt > now
+			);
+
+			// count reservations for this bed type at this site
+			const reservations = await ctx.db
+				.query("reservations")
+				.withIndex("by_site", (q) => q.eq("siteId", recentHold.siteId))
+				.collect();
+
+			const reservationsForBed = reservations.filter(
+				(r) => r.bedType === recentHold.bedType
+			);
+
+			const availableBeds =
+				totalBeds - otherActiveHolds.length - reservationsForBed.length;
+
+			if (availableBeds <= 0) {
+				return {
+					success: false,
+					error: "No beds available",
+					code: "conflict" as const,
+				};
+			}
+		}
+
 		// extend expiration
-		await ctx.db.patch(activeHold._id, {
+		await ctx.db.patch(recentHold._id, {
 			expiresAt: now + HOLD_DURATION_MS,
 		});
 
@@ -198,11 +256,11 @@ export const releaseHold = mutation({
 });
 
 /**
- * Mutation to cleanup expired holds
- * Can be called manually or scheduled
+ * Internal mutation to cleanup expired holds
+ * Called by scheduled cron job every 5 seconds
  * Requirements: 4.4
  */
-export const cleanupExpiredHolds = mutation({
+export const cleanupExpiredHolds = internalMutation({
 	args: {},
 	handler: async (ctx) => {
 		const now = Date.now();

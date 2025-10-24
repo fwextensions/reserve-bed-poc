@@ -36,6 +36,10 @@ export default function ReservationFlowPage() {
 	const [selectedBedType, setSelectedBedType] = useState<BedType | null>(
 		preselectedBedType
 	);
+	const [selectedSiteId, setSelectedSiteId] = useState<string | null>(
+		preselectedSiteId
+	);
+	const [holdExpiresAt, setHoldExpiresAt] = useState<number | null>(null);
 	const [clientName, setClientName] = useState("");
 	const [notes, setNotes] = useState("");
 	const [isPlacingHold, setIsPlacingHold] = useState(false);
@@ -58,6 +62,15 @@ export default function ReservationFlowPage() {
 	const refreshHold = useMutation(api.holds.refreshHold);
 	const createReservation = useMutation(api.reservations.createReservation);
 	const releaseHold = useMutation(api.holds.releaseHold);
+
+	// sync local hold state with backend hold
+	useEffect(() => {
+		if (activeHold && currentStep === "clientInfo") {
+			setHoldExpiresAt(activeHold.expiresAt);
+			setSelectedSiteId(activeHold.siteId);
+			setSelectedBedType(activeHold.bedType);
+		}
+	}, [activeHold, currentStep]);
 
 	// determine initial step based on pre-selected values
 	useEffect(() => {
@@ -86,6 +99,8 @@ export default function ReservationFlowPage() {
 			});
 
 			if (result.success) {
+				setSelectedSiteId(siteId);
+				setHoldExpiresAt(Date.now() + 30000); // 30 seconds from now
 				setCurrentStep("clientInfo");
 			} else {
 				toast.error("Unable to place hold", {
@@ -120,15 +135,19 @@ export default function ReservationFlowPage() {
 	};
 
 	const handleRefreshHold = async () => {
-		if (!user) return;
+		if (!user || !selectedBedType || !selectedSiteId) return;
 
 		setIsRefreshing(true);
 		try {
-			const result = await refreshHold({
+			// try to place a new hold (this will work whether the old one exists or not)
+			const result = await placeHold({
 				userId: user._id as Id<"users">,
+				siteId: selectedSiteId as Id<"sites">,
+				bedType: selectedBedType,
 			});
 
 			if (result.success) {
+				setHoldExpiresAt(Date.now() + 30000); // 30 seconds from now
 				toast.success("Hold refreshed", {
 					description: "You have another 30 seconds to complete the reservation.",
 				});
@@ -157,7 +176,7 @@ export default function ReservationFlowPage() {
 	const handleSubmitReservation = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		if (!user) return;
+		if (!user || !selectedBedType || !selectedSiteId) return;
 
 		// validate inputs
 		if (!clientName.trim()) {
@@ -167,19 +186,14 @@ export default function ReservationFlowPage() {
 			return;
 		}
 
-		if (!notes.trim()) {
-			toast.error("Validation error", {
-				description: "Notes are required",
-			});
-			return;
-		}
-
 		setIsSubmitting(true);
 		try {
 			const result = await createReservation({
 				userId: user._id as Id<"users">,
+				siteId: selectedSiteId as Id<"sites">,
+				bedType: selectedBedType,
 				clientName: clientName.trim(),
-				notes: notes.trim(),
+				notes: notes.trim() || undefined,
 			});
 
 			if (result.success) {
@@ -362,17 +376,15 @@ export default function ReservationFlowPage() {
 				)}
 
 				{/* client info */}
-				{currentStep === "clientInfo" && (
+				{currentStep === "clientInfo" && holdExpiresAt && (
 					<div className="space-y-6">
 						{/* hold timer */}
-						{activeHold && (
-							<HoldTimer
-								holdExpiresAt={activeHold.expiresAt}
-								onRefresh={handleRefreshHold}
-								onExpire={handleHoldExpire}
-								isRefreshing={isRefreshing}
-							/>
-						)}
+						<HoldTimer
+							holdExpiresAt={holdExpiresAt}
+							onRefresh={handleRefreshHold}
+							onExpire={handleHoldExpire}
+							isRefreshing={isRefreshing}
+						/>
 
 						{/* client information form */}
 						<form onSubmit={handleSubmitReservation} className="space-y-4">
@@ -400,23 +412,22 @@ export default function ReservationFlowPage() {
 									htmlFor="notes"
 									className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 								>
-									Notes <span className="text-red-500">*</span>
+									Notes
 								</label>
 								<textarea
 									id="notes"
 									value={notes}
 									onChange={(e) => setNotes(e.target.value)}
-									placeholder="Enter any special needs or notes about the client"
+									placeholder="Enter any special needs or notes about the client (optional)"
 									disabled={isSubmitting}
 									rows={4}
 									className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-									required
 								/>
 							</div>
 
 							<Button
 								type="submit"
-								disabled={isSubmitting || !activeHold}
+								disabled={isSubmitting}
 								className="w-full min-h-[44px]"
 								size="lg"
 							>

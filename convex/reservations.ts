@@ -34,18 +34,26 @@ export const getReservations = query({
 });
 
 /**
- * Mutation to create a reservation from an active hold
- * POC: Requires userId parameter instead of auth
+ * Mutation to create a reservation
+ * POC: Requires userId, siteId, and bedType parameters instead of auth
+ * Hold is optional - if present, it will be released. If not, checks availability.
  * Requirements: 6.1, 6.2, 6.3, 6.4, 6.5
  */
 export const createReservation = mutation({
 	args: {
 		userId: v.id("users"),
+		siteId: v.id("sites"),
+		bedType: v.union(
+			v.literal("apple"),
+			v.literal("orange"),
+			v.literal("lemon"),
+			v.literal("grape")
+		),
 		clientName: v.string(),
-		notes: v.string(),
+		notes: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
-		// validate clientName and notes are provided
+		// validate clientName is provided
 		if (!args.clientName || args.clientName.trim() === "") {
 			return {
 				success: false,
@@ -54,44 +62,79 @@ export const createReservation = mutation({
 			};
 		}
 
-		if (!args.notes || args.notes.trim() === "") {
-			return {
-				success: false,
-				error: "Notes are required",
-				code: "validation_error" as const,
-			};
-		}
-
 		const now = Date.now();
 
-		// verify user has active non-expired hold
+		// check if user has an active hold for this site/bed type
 		const holds = await ctx.db
 			.query("holds")
 			.withIndex("by_case_worker", (q) => q.eq("caseWorkerId", args.userId))
 			.collect();
 
-		const activeHold = holds.find((hold) => hold.expiresAt > now);
+		const activeHold = holds.find(
+			(hold) =>
+				hold.expiresAt > now &&
+				hold.siteId === args.siteId &&
+				hold.bedType === args.bedType
+		);
 
+		// if no active hold, check if bed is available
 		if (!activeHold) {
-			return {
-				success: false,
-				error: "No active hold found. Please start a new reservation.",
-				code: "expired" as const,
-			};
+			const site = await ctx.db.get(args.siteId);
+			if (!site) {
+				return {
+					success: false,
+					error: "Site not found",
+					code: "not_found" as const,
+				};
+			}
+
+			const totalBeds = site.bedCounts[args.bedType];
+
+			// count active holds for this bed type at this site
+			const allHolds = await ctx.db.query("holds").collect();
+			const activeHoldsForBed = allHolds.filter(
+				(hold) =>
+					hold.siteId === args.siteId &&
+					hold.bedType === args.bedType &&
+					hold.expiresAt > now
+			);
+
+			// count reservations for this bed type at this site
+			const reservations = await ctx.db
+				.query("reservations")
+				.withIndex("by_site", (q) => q.eq("siteId", args.siteId))
+				.collect();
+
+			const reservationsForBed = reservations.filter(
+				(r) => r.bedType === args.bedType
+			);
+
+			const availableBeds =
+				totalBeds - activeHoldsForBed.length - reservationsForBed.length;
+
+			if (availableBeds <= 0) {
+				return {
+					success: false,
+					error: "No beds available",
+					code: "conflict" as const,
+				};
+			}
 		}
 
-		// create reservation record with hold details and client info
+		// create reservation record
 		const reservationId = await ctx.db.insert("reservations", {
-			siteId: activeHold.siteId,
-			bedType: activeHold.bedType,
+			siteId: args.siteId,
+			bedType: args.bedType,
 			caseWorkerId: args.userId,
 			clientName: args.clientName.trim(),
-			notes: args.notes.trim(),
+			notes: args.notes?.trim() || undefined,
 			createdAt: now,
 		});
 
-		// delete the hold record
-		await ctx.db.delete(activeHold._id);
+		// if there was an active hold, delete it
+		if (activeHold) {
+			await ctx.db.delete(activeHold._id);
+		}
 
 		return {
 			success: true,

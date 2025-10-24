@@ -8,7 +8,10 @@
 		"start": "next start",
 		"lint": "next lint",
 		"convex:dev": "convex dev",
-		"convex:deploy": "convex deploy"
+		"convex:deploy": "convex deploy",
+		"test": "vitest --run",
+		"test:watch": "vitest",
+		"test:ui": "vitest --ui"
 	},
 	"dependencies": {
 		"@radix-ui/react-dialog": "^1.1.15",
@@ -32,9 +35,12 @@
 		"@types/node": "^24",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"@vitest/ui": "^4.0.2",
+		"convex-test": "^0.0.38",
 		"eslint": "^9",
 		"eslint-config-next": "15.5.0",
 		"tailwindcss": "^4.1.16",
-		"typescript": "^5"
+		"typescript": "^5",
+		"vitest": "^4.0.2"
 	}
 }

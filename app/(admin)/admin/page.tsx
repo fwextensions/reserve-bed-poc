@@ -3,12 +3,15 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { InventorySummaryCard } from "@/components/admin/InventorySummaryCard";
+import { BedInventoryManager } from "@/components/admin/BedInventoryManager";
+import { ReservationList } from "@/components/admin/ReservationList";
+import { SiteInfoEditor } from "@/components/admin/SiteInfoEditor";
 import { BedType } from "@/types";
 
 export default function AdminDashboard() {
 	const user = useQuery(api.users.getSiteAdminUser);
-	const site = user?.siteId ? useQuery(api.sites.getSite, { siteId: user.siteId }) : undefined;
-	const inventory = user?.siteId ? useQuery(api.sites.getSiteInventory, { siteId: user.siteId }) : undefined;
+	const site = useQuery(api.sites.getSite, user?.siteId ? { siteId: user.siteId } : "skip");
+	const inventory = useQuery(api.sites.getSiteInventory, user?.siteId ? { siteId: user.siteId } : "skip");
 
 	// show loading state
 	if (user === undefined || site === undefined || inventory === undefined) {
@@ -57,7 +60,7 @@ export default function AdminDashboard() {
 			</div>
 
 			<div className="mb-6">
-				<h3 className="text-xl font-semibold mb-4">Bed Inventory</h3>
+				<h3 className="text-xl font-semibold mb-4">Bed Inventory Overview</h3>
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 					{bedTypes.map((bedType) => (
 						<InventorySummaryCard
@@ -72,10 +75,16 @@ export default function AdminDashboard() {
 				</div>
 			</div>
 
-			<div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-				<p className="text-sm text-blue-800">
-					Additional management features (bed count updates, reservation management, site info editing) coming soon.
-				</p>
+			<div className="mt-8">
+				<BedInventoryManager siteId={user.siteId} />
+			</div>
+
+			<div className="mt-8">
+				<ReservationList siteId={user.siteId} />
+			</div>
+
+			<div className="mt-8">
+				<SiteInfoEditor siteId={user.siteId} />
 			</div>
 		</div>
 	);

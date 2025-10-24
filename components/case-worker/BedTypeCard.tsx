@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BedType } from "@/types";
 import { cn } from "@/lib/utils";
@@ -43,12 +44,28 @@ export function BedTypeCard({
 	onClick,
 }: BedTypeCardProps) {
 	const config = BED_TYPE_CONFIG[bedType];
+	const [hasChanged, setHasChanged] = useState(false);
+	const previousCount = useRef<number | undefined>(undefined);
+
+	// detect real-time changes and show visual indicator
+	useEffect(() => {
+		if (previousCount.current !== undefined && previousCount.current !== availableCount) {
+			setHasChanged(true);
+			// clear the indicator after 2 seconds
+			const timeout = setTimeout(() => {
+				setHasChanged(false);
+			}, 2000);
+			return () => clearTimeout(timeout);
+		}
+		previousCount.current = availableCount;
+	}, [availableCount]);
 
 	return (
 		<Card
 			className={cn(
-				"cursor-pointer transition-all duration-100 min-h-[44px]",
-				config.color
+				"cursor-pointer transition-all duration-300 min-h-[44px]",
+				config.color,
+				hasChanged && "ring-2 ring-blue-500 shadow-lg"
 			)}
 			onClick={onClick}
 		>
@@ -64,7 +81,14 @@ export function BedTypeCard({
 						</div>
 					</div>
 					<div className="text-right">
-						<div className="text-3xl font-bold">{availableCount}</div>
+						<div className="flex items-center gap-2">
+							<div className="text-3xl font-bold">{availableCount}</div>
+							{hasChanged && (
+								<span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full animate-pulse">
+									Updated
+								</span>
+							)}
+						</div>
 						<p className="text-sm text-muted-foreground">Available</p>
 					</div>
 				</div>
