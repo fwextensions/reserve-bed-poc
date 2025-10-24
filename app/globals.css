@@ -56,14 +56,28 @@
 	--chart-5: 340 75% 55%;
 }
 
+@layer base {
+	* {
+		border-color: hsl(var(--border));
+	}
+	
+	body {
+		background-color: hsl(var(--background));
+		color: hsl(var(--foreground));
+	}
+}
+/*
 * {
 	border-color: hsl(var(--border));
 }
+*/
 
+/*
 body {
 	background-color: hsl(var(--background));
 	color: hsl(var(--foreground));
 }
+*/
 
 @layer utilities {
 	.bg-background {

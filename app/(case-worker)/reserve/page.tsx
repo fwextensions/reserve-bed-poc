@@ -56,6 +56,10 @@ export default function ReservationFlowPage() {
 		api.holds.getActiveHold,
 		user ? { userId: user._id as Id<"users"> } : "skip"
 	);
+	const selectedSite = useQuery(
+		api.sites.getSite,
+		selectedSiteId ? { siteId: selectedSiteId as Id<"sites"> } : "skip"
+	);
 
 	// mutations
 	const placeHold = useMutation(api.holds.placeHold);
@@ -214,8 +218,8 @@ export default function ReservationFlowPage() {
 				toast.success("Reservation confirmed", {
 					description: "The bed has been successfully reserved for your client.",
 				});
-				// navigate back to dashboard
-				router.push("/");
+				// navigate back to case worker dashboard
+				router.push("/case-worker");
 			} else {
 				toast.error("Unable to create reservation", {
 					description: result.error,
@@ -399,6 +403,31 @@ export default function ReservationFlowPage() {
 							onExpire={handleHoldExpire}
 							isRefreshing={isRefreshing}
 						/>
+
+						{/* reservation summary */}
+						{selectedBedType && selectedSite && (
+							<div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+								<h3 className="font-semibold text-sm text-blue-900 mb-3">
+									Reservation Details
+								</h3>
+								<div className="space-y-2 text-sm">
+									<div className="flex items-center gap-2">
+										<span className="text-2xl" role="img" aria-label={BED_TYPE_CONFIG[selectedBedType].name}>
+											{BED_TYPE_CONFIG[selectedBedType].icon}
+										</span>
+										<div>
+											<p className="font-medium">{BED_TYPE_CONFIG[selectedBedType].name} Bed</p>
+											<p className="text-muted-foreground text-xs">Bed Type</p>
+										</div>
+									</div>
+									<div className="border-t border-blue-200 pt-2 mt-2">
+										<p className="font-medium">{selectedSite.name}</p>
+										<p className="text-muted-foreground text-xs">{selectedSite.address}</p>
+										<p className="text-muted-foreground text-xs">{selectedSite.phone}</p>
+									</div>
+								</div>
+							</div>
+						)}
 
 						{/* client information form */}
 						<form onSubmit={handleSubmitReservation} className="space-y-4">

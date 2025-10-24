@@ -32,18 +32,9 @@ export function SiteCard({ site, availableCount, onClick }: SiteCardProps) {
 	return (
 		<Card
 			className={cn(
-				"cursor-pointer transition-all duration-300 min-h-[44px] border-2 hover:shadow-md active:scale-[0.98]",
-				hasChanged && "ring-2 ring-primary shadow-lg"
+				"cursor-pointer transition-all duration-300 min-h-[44px] hover:bg-accent hover:border-blue-500 active:bg-accent/80 border-2",
+				hasChanged && "ring-2 ring-blue-500 shadow-lg"
 			)}
-			style={{
-				borderColor: "hsl(var(--border))",
-			}}
-			onMouseEnter={(e) => {
-				e.currentTarget.style.borderColor = "hsl(var(--primary))";
-			}}
-			onMouseLeave={(e) => {
-				e.currentTarget.style.borderColor = "hsl(var(--border))";
-			}}
 			onClick={onClick}
 		>
 			<CardContent className="p-6">
@@ -55,14 +46,14 @@ export function SiteCard({ site, availableCount, onClick }: SiteCardProps) {
 						</div>
 						<div className="text-right flex-shrink-0">
 							<div className="flex items-center gap-2">
-								<div className="text-3xl font-bold text-primary">
-									{availableCount}
-								</div>
 								{hasChanged && (
 									<span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full animate-pulse">
 										Updated
 									</span>
 								)}
+								<div className="text-3xl font-bold text-primary">
+									{availableCount}
+								</div>
 							</div>
 							<p className="text-sm text-muted-foreground">Available</p>
 						</div>
