@@ -4,12 +4,11 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev --turbopack",
-		"build": "convex deploy --cmd 'npm run build:next'",
-		"build:next": "next build",
+		"build": "next build",
 		"start": "next start",
 		"lint": "next lint",
 		"convex:dev": "convex dev",
-		"convex:deploy": "convex deploy",
+		"convex:deploy": "convex deploy --cmd 'npm run build'",
 		"test": "vitest --run",
 		"test:watch": "vitest",
 		"test:ui": "vitest --ui"
