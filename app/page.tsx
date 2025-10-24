@@ -19,7 +19,7 @@ export default function Home() {
 						</Button>
 					</Link>
 					<Link href="/admin" className="block">
-						<Button className="w-full" variant="outline" size="lg">
+						<Button className="w-full" size="lg">
 							Site Admin Interface
 						</Button>
 					</Link>

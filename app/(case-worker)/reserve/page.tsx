@@ -313,7 +313,7 @@ export default function ReservationFlowPage() {
 												key={bedType}
 												onClick={() => handleBedTypeSelect(bedType)}
 												disabled={available === 0}
-												className="flex items-center justify-between p-4 bg-white border-2 border-gray-200 rounded-xl min-h-[80px] hover:border-blue-500 active:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+												className="flex items-center justify-between p-4 bg-white border-2 border-gray-200 rounded-xl min-h-[80px] hover:border-primary hover:shadow-md active:bg-blue-50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
 											>
 												<div className="flex items-center gap-3">
 													<span className="text-3xl" role="img" aria-label={config.name}>
@@ -363,7 +363,7 @@ export default function ReservationFlowPage() {
 										<button
 											key={item.site._id}
 											onClick={() => handleSiteSelect(item.site._id)}
-											className="flex flex-col gap-2 p-4 bg-white border-2 border-gray-200 rounded-xl min-h-[120px] hover:border-blue-500 active:bg-blue-50 transition-colors text-left"
+											className="flex flex-col gap-2 p-4 bg-white border-2 border-gray-200 rounded-xl min-h-[120px] hover:border-primary hover:shadow-md active:bg-blue-50 active:scale-[0.98] transition-all text-left"
 										>
 											<div className="flex items-start justify-between">
 												<div className="flex-1">

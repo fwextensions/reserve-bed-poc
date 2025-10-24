@@ -55,7 +55,7 @@ export function AvailabilityDashboard() {
 			<Button
 				onClick={handleReserveBed}
 				size="lg"
-				className="w-full min-h-[44px]"
+				className="w-full min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white"
 			>
 				Reserve Bed
 			</Button>

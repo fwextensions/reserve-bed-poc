@@ -32,9 +32,18 @@ export function SiteCard({ site, availableCount, onClick }: SiteCardProps) {
 	return (
 		<Card
 			className={cn(
-				"cursor-pointer transition-all duration-300 min-h-[44px] hover:bg-accent active:bg-accent/80 border-2",
-				hasChanged && "ring-2 ring-blue-500 shadow-lg"
+				"cursor-pointer transition-all duration-300 min-h-[44px] border-2 hover:shadow-md active:scale-[0.98]",
+				hasChanged && "ring-2 ring-primary shadow-lg"
 			)}
+			style={{
+				borderColor: "hsl(var(--border))",
+			}}
+			onMouseEnter={(e) => {
+				e.currentTarget.style.borderColor = "hsl(var(--primary))";
+			}}
+			onMouseLeave={(e) => {
+				e.currentTarget.style.borderColor = "hsl(var(--border))";
+			}}
 			onClick={onClick}
 		>
 			<CardContent className="p-6">

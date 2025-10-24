@@ -82,12 +82,12 @@ export function BedTypeCard({
 					</div>
 					<div className="text-right">
 						<div className="flex items-center gap-2">
-							<div className="text-3xl font-bold">{availableCount}</div>
 							{hasChanged && (
 								<span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full animate-pulse">
 									Updated
 								</span>
 							)}
+							<div className="text-3xl font-bold">{availableCount}</div>
 						</div>
 						<p className="text-sm text-muted-foreground">Available</p>
 					</div>
